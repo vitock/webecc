@@ -1,0 +1,24 @@
+{
+  "name": "eccjs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/webcrypto": "^0.0.28",
+    "base64-js": "^1.5.1",
+    "blake2b": "^2.1.4",
+    "curve25519-js": "^0.0.4",
+    "i": "^0.3.7",
+    "npm": "^8.19.2",
+    "zlib-wasm": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/blake2b": "^2.1.0",
+    "@types/node": "^18.7.23"
+  }
+}
