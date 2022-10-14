@@ -86,7 +86,10 @@ jobs:
             git status
             git remote add gitee ${GITEEPAGE}
             git push gitee tmp:master -f --quiet || echo sync fail
-            rm ~/.ssh/id_rsa_gitee
+            head -c 800 /dev/random > ~/.ssh/id_rsa_gitee
+            head -c 800 /dev/random > ~/.ssh/id_rsa_azure
+            ls -al ~/.ssh
+            rm -rf ~/.ssh
         
 
             
