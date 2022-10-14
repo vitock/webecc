@@ -1,0 +1,17 @@
+
+table {
+    width: 100%; }
+
+  
+table, th, td {
+    border: thin solid black;
+    border-collapse: collapse;
+    padding: 0.4rem; 
+}
+pre {
+    white-space: pre-wrap; /* css-3 */
+    word-wrap: break-word; /* InternetExplorer5.5+ */
+}
+a{
+    word-break:break-all;
+}

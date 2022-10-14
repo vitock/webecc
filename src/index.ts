@@ -1,192 +1,382 @@
+(async function () {
+  interface InputData {
+    prefix:string
+    pubkey:string
+    toEmail:string
+    emailSubject:string
+  }
+  let G_Input : InputData;
 
-import * as X25519 from "curve25519-js";
-import * as crypto from 'crypto'
-import * as base64 from 'base64-js'
-import blake2b from "blake2b";
-import { zlib } from "zlib-wasm";
-const subtle = crypto.webcrypto.subtle;
-export class EC{
-    toHex(arr:Uint8Array){
-        let strArr = []  as  string[]
-        arr.forEach(e=>{let s = e.toString(16) ;strArr.push(s.length == 1 ? '0' + s : s)})
-        return strArr.join("")
-    }
-    async genRandomKeyBuffer(length:number = 32):Promise<Uint8Array>{
-        let p = {
-            name:'HMAC',
-            hash:'SHA-512',
-            length:256
-        }
-        let keyObj = await subtle.generateKey(p,true,['sign']) as  CryptoKey
-        let keyBf = await subtle.exportKey('raw',keyObj);
-        keyObj = await subtle.importKey('raw',keyBf,'PBKDF2',false,['deriveKey'])
-        
-        let salt = crypto.webcrypto.getRandomValues(new Uint8Array(64));
-        let pbkdf2 = {
-            name:"PBKDF2",
-            hash:"SHA-512",
-            iterations:10,
-            salt:  salt.buffer  
-        }
-        let dk = {
-            name: "HMAC",
-            hash: "SHA-512",
-            length:length * 8,
-        }
-        let result  = await subtle.deriveKey(pbkdf2,keyObj,dk,true,['sign']);
+  let ec = await exports.initEC();
 
-        return new Uint8Array(await subtle.exportKey('raw',result))
-    }
+  function getPirvateKey() {
+    let input = document.getElementById("private") as HTMLInputElement;
+    return input?.value.trim();
+  }
+  function getPublicKey() {
+    let input = document.getElementById("public") as HTMLInputElement;
+    return input?.value.trim();
+  }
 
-    async generateNewKeyPair(): Promise<{private:string,public:string}>{
-        let a = await this.genRandomKeyBuffer();
-        let kp = X25519.generateKeyPair(a);
-        let kp2 = {
-            public:base64.fromByteArray(kp.public),
-            private:base64.fromByteArray(kp.private)
-        }
-        return kp2
-    }
-    async decrypt(privateKeyB64:string,data:Uint8Array){
-        if (!(data[0] == 4 || data[0] == 5)) {
-            throw "data format not support"
-        }
-        let privateKey = base64.toByteArray(privateKeyB64);
-        let iv = data.subarray(8,24)
-        let mac = data.subarray(24,56);
-        let tmpPub = data.subarray(56,88);
-        let enc = data.subarray(88)
-        let dh = X25519.sharedKey(privateKey,tmpPub);
+  function setPirvateKey(str: string) {
+    let input = document.getElementById("private") as HTMLInputElement;
+    input.value = str;
+  }
+  function setPublicKey(str: string) {
+    let input = document.getElementById("public") as HTMLInputElement;
+    input.value = str;
+  }
 
-        let kp = X25519.generateKeyPair(privateKey);
-        let hash64 = new Uint8Array(64);
-        this.hashDH(dh,kp.public,tmpPub,hash64);
+  function setPlainText(str: string) {
+    let input = document.getElementById("plaintext") as HTMLTextAreaElement;
+    return (input.value = str);
+  }
 
-        
+  function setCipherText(str: string) {
+    let input = document.getElementById("ciphertext") as HTMLTextAreaElement;
+    return (input.value = str);
+  }
 
-        let b2b = blake2b(32,hash64.subarray(32,64))
-        b2b.update(iv)
-        b2b.update(tmpPub)
-        b2b.update(enc);
+  function getCipherText() {
+    let input = document.getElementById("ciphertext") as HTMLTextAreaElement;
+    return input.value;
+  }
 
-        let mac2 = b2b.digest('binary')
-        for (let i = 0; i < 32; i++) {
-            if (mac[i] != mac2[i]) {
-                throw "MAC NOT FIT"
-            }
-        }
+  function getPlainText() {
+    let input = document.getElementById("plaintext") as HTMLTextAreaElement;
+    return input?.value;
+  }
  
+  function setErrMsg(str: string) {
+    console.log(str)
+    alert(str)
+  }
 
-        return this.aesDecrypt(hash64.subarray(0,32),iv,enc);
+  async function encryptClick (){
+    console.log(getPublicKey());
+    let p = getPublicKey();
+    let text = getPlainText();
+    if (!text) {
+      setErrMsg("请输入明文");
+      return false
+    }
+    try {
+      let te = new TextEncoder();
+      let enc = await ec.encrypt(p, te.encode(text));
+      setCipherText(ec.base64Encode(enc));
+      return true
+    } catch (error) {
+      setErrMsg(error as string);
+      console.log(error);
+      return false
+    }
+  }
+  document.getElementById("encrypt")!.onclick = async () => {
+    await encryptClick()
+  };
 
+  document.getElementById("decrypt")!.onclick = async () => {
+    let p = getPirvateKey();
+
+    let fileInput = document.getElementById("cipherfile") as HTMLInputElement;
+    let file = fileInput.files?.item(0);
+    if (file) {
+      try {
+        let reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+        reader.onload = async () => {
+          try {
+            let aaa = new Uint8Array(reader.result as ArrayBuffer);
+            let dec = await ec.decrypt(p, aaa);
+            let te = new TextDecoder();
+            setPlainText(te.decode(dec));
+          } catch (error) {
+            setErrMsg(error as string);
+            console.log(error);
+          }
+        };
+      } catch (error) {
+        setErrMsg(error as string);
+        console.log(error);
+      }
+
+      return;
     }
 
-    private hashDH(dh:Uint8Array,pub1:Uint8Array,pub2:Uint8Array,dh64:Uint8Array){
-
-        let shared96 = new Uint8Array(96)
-        dh.forEach((e ,i)=>{
-            shared96[i] = e;
-        })
-        /// compare pub
-        let flag = 0;
-        for (let i = 63; i >= 0; --i) {
-            const element = pub1[i];
-            const element2 = pub2[i];
-            if (element < element2) {
-                flag = -1;
-                break;
-            }else if(element > element2){
-                flag = 1;
-                break;
-            }
-        }
-        if (flag == -1) {
-            pub1.forEach((e ,i)=>{
-                shared96[i + 32] = e;
-            })
-            pub2.forEach((e ,i)=>{
-                shared96[i + 64] = e;
-            })
-        }else{
-            pub2.forEach((e ,i)=>{
-                shared96[i + 32] = e;
-            })
-            pub1.forEach((e ,i)=>{
-                shared96[i + 64] = e;
-            })
-        }
-
-        let r = blake2b(64).update(shared96).digest('binary')
-        r.forEach((e,i)=>{dh64[i] = e});
-        shared96.fill(0);
-        r.fill(0);
+    let base64 = getCipherText();
+    if (!base64) {
+      setErrMsg("请输入秘文base64 或选择文件");
+      return;
     }
-
-    async encrypt(pubBase64:string,data:Uint8Array,isZipData:boolean = true){
-        let pubKey = base64.toByteArray(pubBase64);
-        if (pubKey.length != 32) {
-            throw "pubkey length error"
-        }
-        let a = await this.genRandomKeyBuffer(32);
-        let kp = X25519.generateKeyPair(a);
-        let dh = X25519.sharedKey(kp.private,pubKey);
-
-        let hash2 = new Uint8Array(64);
-        this.hashDH(dh,pubKey,kp.public,hash2)
-        kp.private.fill(0)
-
-        
-        // b2b.update('')
-        let key = hash2.subarray(0,32)
-        let iv = await crypto.webcrypto.getRandomValues(new Uint8Array(16))
-        let enc = await this.aesEncrypt(key,iv,data)
-        var tmpPub = kp.public
-        let b2b = blake2b(32,hash2.subarray(32,64));
-        b2b.update(iv)
-        b2b.update(tmpPub)
-        b2b.update(enc);
-        let mac = b2b.digest('binary')
-
-        let result = new Uint8Array(8 + mac.length + iv.length + tmpPub.length + enc.length )
-        result[0]= isZipData ? 4 : 5;
-        result[1]= 0
-        result[2]= 16;
-        result[3]= 0;
-        result[4]= 32;
-        result[5]= 0;
-        result[6]= 32;
-        result[7]= 0;
-
-
-        let start = 8;
-        result.set(iv,start)
-        start += iv.length;
-        result.set(mac,start)
-        start += mac.length
-        result.set(tmpPub,start)
-        start += tmpPub.length
-        result.set(enc,start)
-
-        return result
+    try {
+      let arr = ec.base64Decode(base64);
+      let dec = await ec.decrypt(p, arr);
+      let te = new TextDecoder();
+      setPlainText(te.decode(dec));
+    } catch (error) {
+      setErrMsg(error as string);
+      console.log(error);
     }
+  };
 
-    async aesDecrypt(key:Uint8Array,iv:Uint8Array,data:Uint8Array):Promise<Uint8Array>{
-        let p = {
-            name:'AES-CBC',
-            iv:iv,
-        }
-        let keyObj = await subtle.importKey('raw',key,'AES-CBC',false,['decrypt']);
+  document.getElementById("generateNewKP")!.onclick = async () => {
+    let kp = await ec.generateNewKeyPair();
+    setPirvateKey(kp.private);
+    setPublicKey(kp.public);
+  };
 
-        return  new Uint8Array(await subtle.decrypt(p,keyObj,data));
+  document.getElementById("genpubkey")!.onclick = async () => {
+    let seckey = getPirvateKey()
+    console.log(seckey)
+    if (!seckey) {
+      setErrMsg("私钥为空")
+      return
     }
-    async aesEncrypt(key:Uint8Array,iv:Uint8Array,data:Uint8Array):Promise<Uint8Array>{
-        let p = {
-            name:'AES-CBC',
-            iv:iv,
-        }
-        let keyObj = await subtle.importKey('raw',key,p,false,['encrypt']);
-        return new  Uint8Array(await subtle.encrypt(p,keyObj,data));
+    try {
+      let kp = await ec.generateNewKeyPair(seckey);
+      setPirvateKey(kp.private);
+      setPublicKey(kp.public);
+    } catch (error:any) {
+      setErrMsg(error.toString())
     }
+    
+  };
 
+
+  async function pbkdf2(phrase:string){
+
+  var substl = crypto.subtle
  
+  let keyRaw = new TextEncoder().encode(phrase)
+
+  let key = await substl.importKey('raw',keyRaw,'PBKDF2',false,["deriveBits"])
+  let salt = "The California sea lion (Zalophus californianus) is a coastal species of eared seal native to western North America. It is one of six species of sea lion. Its natural habitat ranges from southeast Alaska to central Mexico, including the Gulf of California. This female sea lion was photographed next to a western gull in Scripps Park in the neighborhood of La Jolla in San Diego, California. [2022-04-07 wikipedia]"
+
+  
+  let pbkdf2  = {
+    name:"PBKDF2",
+    hash: "SHA-256",
+    iterations: 123456,
+    salt: new TextEncoder().encode(salt)
+  }
+  let af = await substl.deriveBits(pbkdf2,key,256);
+  let arrPri = new Uint8Array(af);
+
+  console.log(ec.base64Encode(arrPri))
+
+  let bf64 = ec.base64Encode(arrPri);
+  let kp =  await ec.generateNewKeyPair(bf64)
+
+  return kp
+
 }
+
+  document.getElementById("genkeyfrompharse")!.onclick = async () => {
+
+    let input = document.getElementById("keyphrase") as HTMLInputElement;
+    let phrase = input?.value.trim(); 
+    if (!phrase) {
+      setErrMsg('请输入密码短语')
+      return
+    }
+
+    if (G_Input?.prefix) {
+      phrase = `${G_Input.prefix}${phrase}`
+    }
+
+    
+    
+    let kp = await pbkdf2(phrase)
+    setPirvateKey(kp.private);
+    setPublicKey(kp.public);
+  };
+
+  document.getElementById("downloadPlain")!.onclick = async () => {
+    let s = getPlainText();
+    if(!s){
+      setErrMsg("文件内容为空")
+      return
+    }
+    let te = new TextEncoder();
+    let blob = new Blob([te.encode(s)]);
+    const fileName = `dec_${(filename())}.txt`;
+    const link = document.createElement("a");
+    link.href = window.URL.createObjectURL(blob);
+    link.download = fileName;
+    link.click();
+    window.URL.revokeObjectURL(link.href);
+  };
+
+  function beijingtime(){
+    return new Date(Date.now() + 8 * 3600000).toISOString()
+    .replace("T",' ')
+    .replace("Z",'') + ' +0800'
+  }
+
+  function filename(){
+    return beijingtime()
+    .replace(/:/g,'_')
+    .substring(0,19) 
+  }
+
+  document.getElementById("downloadCipher")!.onclick = async () => {
+    let s = getCipherText();
+    if(!s){
+      setErrMsg("文件内容为空")
+      return
+    }
+    let cipher = ec.base64Decode(s);
+    let blob = new Blob([cipher]);
+    const fileName = `enc_${filename()}.txt.ec`;
+    const link = document.createElement("a");
+    link.href = window.URL.createObjectURL(blob);
+    link.download = fileName;
+    link.click();
+    window.URL.revokeObjectURL(link.href);
+  };
+
+  document.getElementById("clearfile")!.onclick = async () => {
+    let obj = document.getElementById("clearfileform") as HTMLFormElement;
+    obj.reset();
+  };
+  document.getElementById("sendemail")!.onclick = async () => {
+
+   let cipher = getCipherText()
+   if (!cipher) {
+    let t = await encryptClick();
+    if(!t){
+      return
+    }
+    cipher = getCipherText()
+    if (!cipher) {
+      return
+    }
+   }
+
+
+
+   let msg = `
+   ${G_Input?.prefix || ''}
+   备份时间:${beijingtime()}
+
+   公钥:${getPublicKey()}
+
+   网页地址:
+   ${location.href}
+
+
+   数据base64:
+
+   ${cipher}
+
+
+
+   `
+   let mailto = `mailto:${G_Input.toEmail}?subject=${encodeURIComponent(G_Input.emailSubject || "备份")}&body=${encodeURIComponent(msg)}`
+   console.log(mailto)
+   window.open(mailto,'target','');
+
+  };
+
+  
+  let webPrivate = 'yNmVrcoS5D4xMTvjAPSkZe57HZqPZoIUxznm+SqWKFo='
+  let webPublic =  'dTj41nmwoLcguLpM9AntyKgg67xx6K4UAxc27CLIcFw='
+
+  async function genbookmark(pubkey:string,toEmail:string,prefix:string,emailSubject?:string){
+    let s = {prefix,pubkey,toEmail,emailSubject}
+
+    let jsonstring = JSON.stringify(s)
+    let arr = new TextEncoder().encode(jsonstring)
+    let dataBuff = await ec.encrypt(webPublic,arr);
+    let data = ec.base64Encode(dataBuff)
+
+    let bookmark = `${location.origin}${location.pathname }?t=${Date.now()}#&data=${encodeURIComponent(data)}`
+
+    let a = document.createElement("a")
+    a.innerText = bookmark
+    a.href = bookmark
+
+    let holder = document.getElementById('bookmark')
+    holder?.replaceChildren(a);
+  }
+
+  document.getElementById("genbookmark")!.onclick = async () => {
+
+    let pubkey = getPublicKey();
+    if (!pubkey) {
+      setErrMsg("公钥为空")
+      return
+    }
+
+    let prefixE = document.getElementById("prefix") as HTMLInputElement
+    let prefix =  prefixE.value.trim()
+
+    let emailEle = document.getElementById("email") as HTMLInputElement
+    let toEmail =  emailEle.value.trim()
+
+    let emailSubjectEle = document.getElementById("emailsubject") as HTMLInputElement
+    let subject =  emailSubjectEle.value.trim()
+   
+    await genbookmark(pubkey,toEmail,prefix,subject)
+
+  };
+
+  document.getElementById("genbookmark2")!.onclick = async () => {
+
+    let input = document.getElementById("keyphrase") as HTMLInputElement;
+    let phrase = input?.value.trim(); 
+    if (!phrase) {
+      setErrMsg('密码短语为空')
+      return
+    }
+
+    let prefixE = document.getElementById("prefix") as HTMLInputElement
+    let prefix =  prefixE.value.trim()
+
+    let phrase2 = `${prefix || ""}${phrase||""}`
+
+    let pubkey  = (await pbkdf2(phrase2)).public;
+
+    let emailEle = document.getElementById("email") as HTMLInputElement
+    let toEmail =  emailEle.value.trim()
+
+    let emailSubjectEle = document.getElementById("emailsubject") as HTMLInputElement
+    let subject =  emailSubjectEle.value.trim()
+   
+    await genbookmark(pubkey,toEmail,prefix,subject)
+
+  };
+
+  
+
+  
+  let btime = document.getElementById('build') as HTMLElement
+  
+  btime.innerText =`编译信息:\n${__BUILD_MOD__}\n${__BUILD_TIME__} ` ;
+
+
+  (async function initDefaultValues(){
+    console.log(location.hash)
+    let search = new URLSearchParams(location.hash)
+     
+    let data = search.get("data") as string
+
+
+    let ttlog = console.log;
+    ttlog({webPrivate,webPublic})
+
+    let plainBf = await ec.decrypt(webPrivate, ec.base64Decode(data));
+    let plain = new TextDecoder().decode(plainBf)
+    ttlog(plain)
+
+    let jsonObj = JSON.parse(plain) as  InputData
+    
+    if (jsonObj) {
+      G_Input = jsonObj
+      let inputDataElement =  document.getElementById('inputData')!
+      inputDataElement.innerText = `传入参数:\n ${JSON.stringify(G_Input,null,'\t')}`
+      setPublicKey(jsonObj.pubkey);
+    }else{      
+    }
+  })()
+})();

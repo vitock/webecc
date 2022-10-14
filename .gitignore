@@ -3,3 +3,11 @@ node_modules/*
 dist
 dist/*
 src/test.ts
+tmp
+tmp/*
+pkinfo.txt
+www/js
+www/js/*
+www/css
+www/css/*
+www/README.html

@@ -1,0 +1,100 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["master"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+        - name: Setup Node
+          uses: actions/setup-node@v3
+          with:
+            node-version: "16"
+            cache: ${{ steps.detect-package-manager.outputs.manager }}
+        - run: npm ci
+        - run: npm run build --if-present
+        - name: Upload artifact
+          uses: actions/upload-pages-artifact@v1
+          with:
+            path: ./www
+
+        - shell: bash
+          name: SYNC
+          env:
+            GITEE: ${{ secrets.GITEE }}
+            GIEEREPO: ${{ secrets.GIEEREPO }}
+            GITEEPAGE: ${{ secrets.GITEEPAGE }}
+          run: |
+            mkdir  -p ~/.ssh
+            echo ${GITEE} | base64 -d > id_rsa_gitee
+            mv id_rsa_gitee   ~/.ssh/id_rsa_gitee
+            chmod 700 ~/.ssh 
+            chmod 600 ~/.ssh/id_rsa_gitee
+            echo SG9zdCBnaXRlZS5jb20KICAgIEhvc3ROYW1lIGdpdGVlLmNvbQogICAgVXNlciBnaXQKICAgIElkZW50aXR5RmlsZSB+Ly5zc2gvaWRfcnNhX2dpdGVlCiAgICBTdHJpY3RIb3N0S2V5Q2hlY2tpbmcgbm8= | base64 -d  > ~/.ssh/config
+
+ 
+            ls -al ~/.ssh
+
+            echo "SYNC to Gitee"
+            git config --global user.email "vi"
+            git config --global user.name "github-action"
+
+
+            git status
+            rm -rf .git
+            git init 
+            git add .
+            git commit -m "$(date)"
+            git checkout -b tmp 
+            git remote add tee ${GIEEREPO}
+            git push tee  tmp:master -f  --quiet
+
+            cd ./www
+           
+            git init 
+            git add .
+            git commit -m "$(date)"
+            git status 
+            git checkout -b tmp
+            git status
+            git remote add gitee ${GITEEPAGE}
+            git push gitee tmp:master -f --quiet || echo sync fail
+            rm ~/.ssh/id_rsa_gitee
+        
+
+            
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
+ 
+      

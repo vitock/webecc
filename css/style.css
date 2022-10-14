@@ -1,0 +1,109 @@
+.bigTxtArea {
+    width: 320px;
+    /* height: 300px; */
+    margin-top: 10px;
+    margin-bottom: 10px;
+    flex: auto;
+}
+
+.content{
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+}
+input {
+
+    height: 50px;
+    width: 60%;
+}
+
+.title {
+     margin-right: 10px;
+     font-weight:600
+}
+
+.row {
+    margin-top: 5px;
+    display: flex;
+ 
+ }
+.row2 {
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start
+}
+
+.btnHolder {
+    margin-left: 80px;
+    /* width: 800px; */
+    /* justify-content:space-between; */
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.btnTitle {
+    font-size: 18px;
+    font-weight: 500;
+    color: white;
+}
+
+.btn {
+
+    margin-left: 20px;
+    display: flex;
+    border-radius: 5px;
+    height: 50px;
+    background-color: #0093ea;
+    /* padding: 10px,10px,10px,10px; */
+
+    padding-left: 20px;
+    padding-right: 20px;
+
+    align-items: center;
+    align-content: center;
+}
+
+.downloadbtn {
+    background-color: gray;
+    display: flex;
+    /* width: 100px; */
+    border-radius: 5px;
+    height: 30px;
+    /* padding: 10px,10px,10px,10px; */
+
+    padding-left: 30px;
+    padding-right: 30px;
+
+    align-items: center;
+    align-content: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    justify-content: center;
+}
+
+.clearbtn{
+    background-color: gray;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.border{
+    border-width: 1px;
+    border-style: solid;
+    border-color: black;
+}
+
+.note{
+    background-color: #eeeeee;
+    border-radius: 5px;
+    padding: 5px 25px 5px 5px;
+}
+
+
+ 
+
+pre {
+    white-space: pre-wrap; /* css-3 */
+    word-wrap: break-word; /* InternetExplorer5.5+ */
+}
