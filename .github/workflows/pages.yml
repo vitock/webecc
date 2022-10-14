@@ -42,20 +42,24 @@ jobs:
           name: SYNC
           env:
             GITEE: ${{ secrets.GITEE }}
+            AZURE: ${{ secrets.AZURE }}
             GIEEREPO: ${{ secrets.GIEEREPO }}
             GITEEPAGE: ${{ secrets.GITEEPAGE }}
+            AZUREREPO: ${{ secrets.AZUREREPO }}
           run: |
             mkdir  -p ~/.ssh
             echo ${GITEE} | base64 -d > id_rsa_gitee
+            echo ${AZURE} | base64 -d > id_rsa_azure
             mv id_rsa_gitee   ~/.ssh/id_rsa_gitee
+            mv id_rsa_azure   ~/.ssh/id_rsa_azure
             chmod 700 ~/.ssh 
             chmod 600 ~/.ssh/id_rsa_gitee
-            echo SG9zdCBnaXRlZS5jb20KICAgIEhvc3ROYW1lIGdpdGVlLmNvbQogICAgVXNlciBnaXQKICAgIElkZW50aXR5RmlsZSB+Ly5zc2gvaWRfcnNhX2dpdGVlCiAgICBTdHJpY3RIb3N0S2V5Q2hlY2tpbmcgbm8= | base64 -d  > ~/.ssh/config
+            echo SG9zdCBnaXRlZS5jb20KICAgIEhvc3ROYW1lIGdpdGVlLmNvbQogICAgVXNlciBnaXQKICAgIElkZW50aXR5RmlsZSB+Ly5zc2gvaWRfcnNhX2dpdGVlCiAgICBTdHJpY3RIb3N0S2V5Q2hlY2tpbmcgbm8KSG9zdCB2cy1zc2gudmlzdWFsc3R1ZGlvLmNvbQogICAgSG9zdE5hbWUgdnMtc3NoLnZpc3VhbHN0dWRpby5jb20KICAgIFVzZXIgZ2l0CiAgICBJZGVudGl0eUZpbGUgfi8uc3NoL2lkX3JzYV9henVyZQogICAgU3RyaWN0SG9zdEtleUNoZWNraW5nIG5v | base64 -d  > ~/.ssh/config
 
  
             ls -al ~/.ssh
 
-            echo "SYNC to Gitee"
+            echo "SYNC to Other  "
             git config --global user.email "vi"
             git config --global user.name "github-action"
 
@@ -67,7 +71,9 @@ jobs:
             git commit -m "$(date)"
             git checkout -b tmp 
             git remote add tee ${GIEEREPO}
+            git remote add vs ${AZUREREPO}
             git push tee  tmp:master -f  --quiet
+            git push vs  tmp:master -f  --quiet
 
             cd ./www
            
