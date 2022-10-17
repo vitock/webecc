@@ -71,8 +71,7 @@ buffer[96];
 copy sharedX  => buffer[0..31]
 
 /**
-* 下面公钥比较是大端模式，也就是从高位先比较
-* 小的在前，紧跟sharedX
+* 下面公钥按照小端模式比较，先比较高位置，再比较低位
 */
 if tmpPubKey > publickKey  
     copy publickKey => buffer[32...63]
