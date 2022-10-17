@@ -115,7 +115,7 @@ class EC{
         })
         /// compare pub
         let flag = 0;
-        for (let i = 63; i >= 0; --i) {
+        for (let i = 31; i >= 0; --i) {
             const element = pub1[i];
             const element2 = pub2[i];
             if (element < element2) {
