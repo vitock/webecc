@@ -101,7 +101,12 @@ input {
 }
 
 
- 
+#inputData{
+    padding: 2rem;
+    background-color: black;
+    color: white;
+    display: none;
+}
 
 pre {
     white-space: pre-wrap; /* css-3 */

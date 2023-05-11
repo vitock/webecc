@@ -401,7 +401,8 @@
     if (jsonObj) {
       G_Input = jsonObj;
       let inputDataElement = document.getElementById("inputData")!;
-      inputDataElement.innerText = `传入参数:\n ${JSON.stringify(
+      inputDataElement.style.display = 'block'
+      inputDataElement.innerText = `从链接hash带入的参数:\n ${JSON.stringify(
         G_Input,
         null,
         "\t"
