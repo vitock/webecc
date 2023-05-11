@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <title>EC TOOL</title>
+  <title>便捷备份</title>
   <link rel="stylesheet" type="text/css" href="css/style.min.css">
   </link>
   <script>var exports = {};</script>
@@ -12,6 +12,9 @@
 </head>
 
 <body>
+  <div class="contain">
+    <h1>便捷备份</h1>
+    <hr>
   <pre id="inputData"></pre>
   <div class="row2">
     <text  class="title">公钥</text>
@@ -106,6 +109,31 @@
   </div>
 
 
+  <br><br><br><br><br><br>
+  <hr>
+   <h1>如何使用</h1>
+   <h2>备份</h2>
+   <p>1. 输入短语</p>
+   <p>2. 输入备份邮箱</p>
+   <p>3. 输入邮件标题</p>
+   <p>4. 短语前缀（可以是你的邮箱地址，也可以是一段话，随意）</p>
+   <p>5. 生成书签链接并保存</p>
+
+
+   
+   <p>6. 从书签链接打开网页，在明文输入框，输入你的信息，然后点击再右边 "发送加密结果到邮件"</p>
+   <br>
+   <p> <strong>* 后续使用就只需要从第6步开始。无需输入重复密码</strong></p>
+   <h2>还原</h2>
+    <p>1. 在右边输入框粘贴密文</p>
+    <p>2. 输入密码短语</p>
+    <p>3. 点击根据“短语生成” 来生成密钥</p>
+    <p>4. 点击解密</p>
+
+
+
+
+
   <hr>
   <h1>关于</h1>
   <pre id = 'build'></pre>
@@ -130,10 +158,8 @@
     mysecret[31] &= 127;
     mysecret[31] |= 64
   </pre>
-  <p>
-
- 
-   
+  <p></p>
+  </div>
 </body>
 
 </html>
