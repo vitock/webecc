@@ -76,3 +76,29 @@ declare const __DEBUG__:boolean
 declare const __BUILD_TIME__:string
 declare const __BUILD_MOD__:string
 
+
+
+interface CompressionStreamInit {
+    flush?: number;
+    chunkSize?: number;
+    strategy?: number;
+  }
+  
+declare class CompressionStream {
+    constructor(format?: string)
+  
+    readonly readable: ReadableStream<Uint8Array>;
+    readonly writable: WritableStream<Uint8Array>;
+  
+    reset(): void;
+}
+declare class DecompressionStream {
+    constructor(format?: string)
+  
+    readonly readable: ReadableStream<Uint8Array>;
+    readonly writable: WritableStream<Uint8Array>;
+  
+    reset(): void;
+}
+
+  

@@ -93,7 +93,7 @@ function clean(cb) {
 gulp.task("clear", clean);
 
 gulp.task("combinejs", async function (cb) {
-  fs.renameSync("www/js/wasm_gzip_bg.wasm", "www/js/tool_bg.wasm");
+  // fs.renameSync("www/js/wasm_gzip_bg.wasm", "www/js/tool_bg.wasm");
   return gulp
     .src(["./tmp/!(index).js"])
     .pipe(concat("tool.js"))
@@ -143,7 +143,7 @@ gulp.task("genHashFile", function () {
       return "tmp/" + e;
     }
   });
-  files.push("static/wasm_gzip_bg.wasm");
+  // files.push("static/wasm_gzip_bg.wasm");
   files.push("www/index.html");
   console.log(files)
   return gulp.src(files).pipe(concat("md5")).pipe(gulp.dest("tmp"));

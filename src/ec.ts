@@ -1,9 +1,92 @@
 
 var subtle = crypto.subtle
+
+class GZip{
+    async gzip(inputarr:Uint8Array){ 
+        
+         // 创建包含输入数据的可读流
+        const inputStream = new ReadableStream({
+            start(controller) {
+            controller.enqueue(inputarr);
+            controller.close();
+            }
+        });
+        const gzs = new CompressionStream('gzip');
+        const compressedStream = inputStream.pipeThrough(gzs);
+
+        const reader = compressedStream.getReader();
+        let chunks: Uint8Array[] = [];
+        console.log(inputarr.length)
+        while (true) {
+            try {
+                const { done, value } = await reader.read();  
+                console.log(value?.length)
+                if (done) break;
+                if (value !== undefined) chunks.push(value);    
+            } catch (error) {
+                console.log(error)
+                break
+            }
+        }
+
+        let len = chunks.reduce((s,t)=> s + t.length,0)
+
+        var gzip = new Uint8Array(len)
+        var idx = 0;
+        chunks.forEach(bytes=>{
+            bytes.forEach((v)=>{
+                gzip[idx ++] = v 
+            })
+        })
+
+        return gzip
+    }
+    async ungzip(inputarr:Uint8Array){
+        
+         // 创建包含输入数据的可读流
+         const inputStream = new ReadableStream({
+            start(controller) {
+            controller.enqueue(inputarr);
+            controller.close();
+            }
+        });
+        const gzs = new DecompressionStream('gzip');
+        const compressedStream = inputStream.pipeThrough(gzs);
+
+        const reader = compressedStream.getReader();
+        let chunks: Uint8Array[] = [];
+        console.log(inputarr.length)
+        while (true) {
+            try {
+                const { done, value } = await reader.read();  
+                console.log(value?.length)
+                if (done) break;
+                if (value !== undefined) chunks.push(value);    
+            } catch (error) {
+                console.log(error)
+                break
+            }
+        }
+
+        let len = chunks.reduce((s,t)=> s + t.length,0)
+        var plain  = new Uint8Array(len)
+        var idx = 0;
+        chunks.forEach(bytes=>{
+            bytes.forEach((v)=>{
+                plain[idx ++] = v 
+            })
+        })
+
+        return plain
+    }
+    
+}
+
 class EC{
-    zlib :ZLIB
-    constructor(izlib:ZLIB){
-        this.zlib = izlib
+    zlib :GZip
+    constructor(){
+        this.zlib = new GZip
+
     }
     
     toHex(arr:Uint8Array){
@@ -101,7 +184,7 @@ class EC{
 
         if (data[0] == 4) {
             
-            return this.zlib.ungzip(dec)
+            return  await this.zlib.ungzip(dec)
         }
 
         return dec
@@ -151,7 +234,7 @@ class EC{
     }
     async encrypt(pubBase64:string,data:Uint8Array,zipFist:boolean = true){
         if (zipFist) {
-            let zipdata = this.zlib.gzip(data)
+            let zipdata = await this.zlib.gzip(data)
             return this._encrypt(pubBase64,zipdata,true)
 
         }else{
@@ -229,7 +312,7 @@ class EC{
 }
 
 export async function initEC(){
-    await init();
-    return new EC(exports.zlib)
+    // await init();
+    return new EC()
 }
 exports.initEC = initEC

@@ -8,12 +8,37 @@
   </link>
   <script>var exports = {};</script>
 
- 
+ <style lang="">
+   table {
+    border-collapse: collapse;
+   }
+   th ,th ,td{
+    padding: 0.2rem 3rem 0.2rem 3rem;
+    border-bottom: 1px solid black;
+   }
+
+   tr:nth-child(even){
+    background-color: #eee;
+   }
+ </style>
 </head>
 
 <body>
   <div class="contain">
     <h1>便捷备份</h1>
+    <hr>
+    <table>
+      <thead><tr><th>浏览器</th><th>版本</th></tr></thead>
+      <tbody>
+         <tr><td>Chrome</td><td> >= 80</td></tr>
+         <tr><td>Firefox</td><td> >= 113</td></tr>
+         <tr><td>Safari</td><td> >= 16.4</td></tr>
+         <tr><td>Opear</td><td> >= 67</td></tr>
+    </tbody>
+    </table>
+   
+    
+
     <hr>
   <pre id="inputData"></pre>
   <div class="row2">
