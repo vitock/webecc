@@ -26,6 +26,8 @@
 <body>
   <div class="contain">
     <h1>便捷备份</h1>
+
+    <h2>浏览器</h2>
     <hr>
     <table>
       <thead><tr><th>浏览器</th><th>版本</th></tr></thead>
@@ -36,11 +38,12 @@
          <tr><td>Opear</td><td> >= 67</td></tr>
     </tbody>
     </table>
-   
-    
-
-    <hr>
+  
   <pre id="inputData"></pre>
+
+  <hr>
+  <h2>密钥信息</h2>
+
   <div class="row2">
     <text  class="title">公钥</text>
     <input id='public' type="text" autocomplete='off' placeholder="公钥" ></input>
@@ -55,13 +58,22 @@
   </div>
 
   <div class="row2 btnHolder">
-    <div id = 'encrypt' class="btn"><text class="btnTitle">加密</text></div>
-    <div id = 'decrypt' class="btn"><text class="btnTitle">解密</text></div>
-    <div id = 'generateNewKP' class="btn"><text class="btnTitle">生成密钥对</text></div>
+   
+    <div id = 'generateNewKP' class="btn"><text class="btnTitle">随机生成密钥对</text></div>
     <div id = 'genpubkey' class="btn"><text class="btnTitle">根据私钥生成公钥</text></div>
     <div id = 'genkeyfrompharse' class="btn"><text class="btnTitle">根据短语生成</text></div>
   </div>
 
+
+  <hr>
+  <br> 
+  <h2>加解密</h2>
+    <div class="row2 btnHolder">
+      <div id = 'encrypt' class="btn"><text class="btnTitle">加密</text></div>
+      <div id = 'decrypt' class="btn"><text class="btnTitle">解密</text></div>
+
+    </div>
+   
   <div class="row2 btnHolder">
     
     
@@ -112,7 +124,10 @@
 
 
 
-  <div class="border">
+ 
+
+  <hr>
+
   <h2>生成书签链接</h2>
   
   <input id='email' type="text" autocomplete='off' placeholder="发送备份邮箱， aaabb@qq.com" ></input>
@@ -128,10 +143,7 @@
     <a  id = "genbookmark2" href="javascript:void(0)">生成书签链接(使用密码短语派生的公钥)</a>
   </div>
 
-  <div id = 'bookmark'>
-  </div>
-
-  </div>
+  <div id = 'bookmark'>  </div>
 
 
   <br><br><br><br><br><br>
@@ -165,7 +177,7 @@
   <p>
    <a href="https://github.com/vitock/webecc/">项目地址 github</a>
    <br>
-   <h2><a href="README.html">格式说明</a></h2>
+   <h2><a href="fmt.html">格式说明</a></h2>
   <pre  >
     此网页是一个利用Curve25519椭圆曲线进行加密的工具网站，所有操作都在本地完成。
 
